@@ -24,6 +24,10 @@ from framework.engine import DevOrganization
 from framework.validation import validate_all
 from framework.role import RoleLoader
 from framework.workflow import WorkflowLoader
+from framework.adapter import create_adapter
+from framework.runner import WorkflowRunner
+from framework.review import AutoReviewer
+from framework.iteration import IterationEngine
 
 
 def get_org(config_path: str = "config.yaml") -> DevOrganization:
@@ -168,6 +172,167 @@ project:
     print(f"  4. python cli.py plan feature_development  # Plan a feature")
 
 
+def _get_adapter(args):
+    """Create an LLM adapter from CLI args."""
+    provider = getattr(args, "provider", "file")
+    kwargs = {}
+    if provider == "file":
+        output_dir = getattr(args, "output", None) or ".output"
+        kwargs["output_dir"] = output_dir
+    if hasattr(args, "model") and args.model:
+        kwargs["model"] = args.model
+    return create_adapter(provider, **kwargs)
+
+
+def _progress_callback(message: str, step, current: int, total: int):
+    """Print workflow progress."""
+    pct = int(current / total * 100)
+    print(f"  [{current}/{total}] ({pct}%) {message}")
+
+
+def cmd_run(args):
+    """Execute a workflow end-to-end with an LLM adapter."""
+    org = get_org(args.config)
+    adapter = _get_adapter(args)
+    workflow = org.load_workflow(args.workflow_id)
+
+    # Set workflow variables from CLI
+    if args.var:
+        for item in args.var:
+            key, _, value = item.partition("=")
+            workflow.variables[key] = value
+
+    runner = WorkflowRunner(adapter, org.roles, org.context)
+
+    print(f"Running workflow: {workflow.name}")
+    print(f"Provider: {adapter.name()}")
+    print(f"Steps: {len(workflow.steps)}\n")
+
+    result = runner.run(
+        workflow,
+        on_progress=_progress_callback,
+        save_to=args.output,
+    )
+
+    print(f"\n{result.summary()}")
+
+    if args.output:
+        # Save run summary
+        summary_path = Path(args.output) / "_run_summary.md"
+        summary_path.write_text(result.summary())
+        print(f"\nArtifacts saved to: {args.output}/")
+
+
+def cmd_review(args):
+    """Run automated multi-perspective review."""
+    org = get_org(args.config)
+    adapter = _get_adapter(args)
+
+    # Read content from file or stdin
+    if args.file:
+        content = Path(args.file).read_text()
+    else:
+        print("Reading from stdin (Ctrl+D to end)...")
+        content = sys.stdin.read()
+
+    reviewer = AutoReviewer(adapter, org.roles, org.context)
+
+    print(f"Running review ({args.type})...")
+    print(f"Provider: {adapter.name()}")
+
+    if args.type == "architecture":
+        report = reviewer.review_architecture(content)
+    elif args.type == "frontend":
+        report = reviewer.review_code(content)
+    elif args.type == "backend":
+        report = reviewer.review(content, content_type="backend")
+    elif args.type == "prd":
+        report = reviewer.review_prd(content)
+    else:
+        report = reviewer.review_code(content)
+
+    print(report.format_report())
+
+    if args.output:
+        Path(args.output).write_text(report.format_report())
+        print(f"\nReport saved to: {args.output}")
+
+
+def cmd_iterate(args):
+    """Run an iterative refinement loop."""
+    org = get_org(args.config)
+    adapter = _get_adapter(args)
+
+    engine = IterationEngine(adapter, org.roles, org.context)
+
+    def on_iteration(i: int, phase: str):
+        print(f"  [Iteration {i}] {phase}")
+
+    context = {}
+    if args.var:
+        for item in args.var:
+            key, _, value = item.partition("=")
+            context[key] = value
+
+    if args.mode == "review":
+        print(f"Review loop: {args.producer} → {args.reviewer}")
+        print(f"Max iterations: {args.max_iter}\n")
+
+        producer_role, producer_skill = args.producer.split("/")
+        reviewer_role, reviewer_skill = args.reviewer.split("/")
+
+        result = engine.review_loop(
+            producer_role=producer_role,
+            producer_skill=producer_skill,
+            reviewer_role=reviewer_role,
+            reviewer_skill=reviewer_skill,
+            initial_context=context,
+            max_iterations=args.max_iter,
+            on_iteration=on_iteration,
+        )
+    elif args.mode == "research":
+        print(f"Research loop on: {context.get('question', 'N/A')}")
+        print(f"Max depth: {args.max_iter}\n")
+
+        result = engine.research_loop(
+            research_role="product_manager",
+            research_skill="research_topic",
+            synthesis_role="product_manager",
+            synthesis_skill="research_topic",
+            question=context.get("question", ""),
+            max_depth=args.max_iter,
+            on_iteration=on_iteration,
+        )
+    elif args.mode == "scheme":
+        print(f"Scheme iteration: {args.producer}")
+        critics = args.critics.split(",") if args.critics else ["code_reviewer", "architect"]
+        print(f"Critics: {', '.join(critics)}")
+        print(f"Max iterations: {args.max_iter}\n")
+
+        producer_role, producer_skill = args.producer.split("/")
+
+        result = engine.scheme_iteration(
+            designer_role=producer_role,
+            designer_skill=producer_skill,
+            critic_roles=critics,
+            critic_skill="review_architecture",
+            requirements=context,
+            max_iterations=args.max_iter,
+            on_iteration=on_iteration,
+        )
+    else:
+        print(f"Unknown iteration mode: {args.mode}")
+        sys.exit(1)
+
+    print(f"\n{result.summary()}")
+
+    if result.final_output and args.output:
+        Path(args.output).write_text(result.final_output)
+        print(f"\nFinal output saved to: {args.output}")
+    elif result.final_output and not args.output:
+        print(f"\n--- Final Output ---\n{result.final_output[:500]}...")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="LLM Dev Organization - Multi-role development framework",
@@ -221,6 +386,36 @@ Examples:
     p_init.add_argument("directory", help="Target directory for the new project")
     p_init.add_argument("--name", help="Project name (defaults to directory name)")
 
+    # run
+    p_run = subparsers.add_parser("run", help="Execute a workflow end-to-end")
+    p_run.add_argument("workflow_id", help="Workflow to execute")
+    p_run.add_argument("--provider", default="file", help="LLM provider: anthropic|openai|file (default: file)")
+    p_run.add_argument("--model", help="Model override (e.g., claude-opus-4-20250514)")
+    p_run.add_argument("--output", default=".output", help="Output directory (default: .output)")
+    p_run.add_argument("--var", nargs="*", help="Workflow variables as key=value")
+
+    # review
+    p_review = subparsers.add_parser("review", help="Run automated multi-perspective review")
+    p_review.add_argument("--file", help="File to review (reads stdin if omitted)")
+    p_review.add_argument("--type", default="code", choices=["code", "frontend", "backend", "architecture", "prd"],
+                           help="Content type (default: code)")
+    p_review.add_argument("--provider", default="file", help="LLM provider (default: file)")
+    p_review.add_argument("--model", help="Model override")
+    p_review.add_argument("--output", help="Save report to file")
+
+    # iterate
+    p_iter = subparsers.add_parser("iterate", help="Run iterative refinement loops")
+    p_iter.add_argument("mode", choices=["review", "research", "scheme"],
+                         help="Iteration mode: review|research|scheme")
+    p_iter.add_argument("--producer", help="Producer role/skill (e.g., architect/design_system)")
+    p_iter.add_argument("--reviewer", help="Reviewer role/skill (e.g., code_reviewer/review_pull_request)")
+    p_iter.add_argument("--critics", help="Comma-separated critic role IDs (for scheme mode)")
+    p_iter.add_argument("--max-iter", type=int, default=3, help="Max iterations (default: 3)")
+    p_iter.add_argument("--var", nargs="*", help="Context variables as key=value")
+    p_iter.add_argument("--provider", default="file", help="LLM provider (default: file)")
+    p_iter.add_argument("--model", help="Model override")
+    p_iter.add_argument("--output", help="Save final output to file")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -236,6 +431,9 @@ Examples:
         "org": cmd_org,
         "validate": cmd_validate,
         "init": cmd_init,
+        "run": cmd_run,
+        "review": cmd_review,
+        "iterate": cmd_iterate,
     }
 
     commands[args.command](args)

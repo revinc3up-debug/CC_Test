@@ -44,6 +44,12 @@ skills:
     output_format: |
       Prioritized backlog with scoring rationale
 
+  - name: research_topic
+    description: Research a topic thoroughly, synthesize findings, and identify gaps
+    prompt_file: research_topic.md
+    output_format: |
+      Research report with findings, synthesis, open questions, and recommendations
+
 tools:
   - requirements_analysis
   - user_story_mapping
