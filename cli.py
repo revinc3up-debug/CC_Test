@@ -14,12 +14,16 @@ Usage:
 import argparse
 import sys
 import json
+import shutil
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from framework.engine import DevOrganization
+from framework.validation import validate_all
+from framework.role import RoleLoader
+from framework.workflow import WorkflowLoader
 
 
 def get_org(config_path: str = "config.yaml") -> DevOrganization:
@@ -93,6 +97,77 @@ def cmd_org(args):
     print(org.get_org_chart())
 
 
+def cmd_validate(args):
+    """Validate all role and workflow configurations."""
+    org = get_org(args.config)
+    result = validate_all(org.roles, org.workflows)
+    print(result)
+    if not result.is_valid:
+        sys.exit(1)
+
+
+def cmd_init(args):
+    """Scaffold a new project with the framework."""
+    target = Path(args.directory)
+    framework_root = Path(__file__).parent
+
+    if target.exists() and any(target.iterdir()):
+        print(f"Error: Directory '{target}' is not empty.")
+        print("Use an empty directory or a new path.")
+        sys.exit(1)
+
+    target.mkdir(parents=True, exist_ok=True)
+
+    # Copy framework essentials
+    dirs_to_copy = ["framework", "roles", "workflows"]
+    for dirname in dirs_to_copy:
+        src = framework_root / dirname
+        dst = target / dirname
+        if src.exists():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
+            print(f"  Copied {dirname}/")
+
+    # Copy files
+    files_to_copy = ["cli.py", "requirements.txt", ".gitignore"]
+    for filename in files_to_copy:
+        src = framework_root / filename
+        if src.exists():
+            shutil.copy2(src, target / filename)
+            print(f"  Copied {filename}")
+
+    # Generate project config with user's project name
+    project_name = args.name or target.name
+    config_content = f"""# LLM Dev Organization - Project Configuration
+
+roles_dir: roles
+workflows_dir: workflows
+
+project:
+  name: "{project_name}"
+  description: "TODO: Describe your project here."
+  tech_stack:
+    frontend: []
+    backend: []
+    infrastructure: []
+  constraints: []
+"""
+    (target / "config.yaml").write_text(config_content)
+    print(f"  Created config.yaml")
+
+    # Generate CLAUDE.md
+    src_claude = framework_root / "CLAUDE.md"
+    if src_claude.exists():
+        shutil.copy2(src_claude, target / "CLAUDE.md")
+        print(f"  Copied CLAUDE.md")
+
+    print(f"\nProject '{project_name}' initialized at: {target}")
+    print(f"\nNext steps:")
+    print(f"  1. cd {target}")
+    print(f"  2. Edit config.yaml with your project details")
+    print(f"  3. python cli.py roles          # See your team")
+    print(f"  4. python cli.py plan feature_development  # Plan a feature")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="LLM Dev Organization - Multi-role development framework",
@@ -138,6 +213,14 @@ Examples:
     # org
     subparsers.add_parser("org", help="Show organization chart")
 
+    # validate
+    subparsers.add_parser("validate", help="Validate all role and workflow configs")
+
+    # init
+    p_init = subparsers.add_parser("init", help="Scaffold a new project with the framework")
+    p_init.add_argument("directory", help="Target directory for the new project")
+    p_init.add_argument("--name", help="Project name (defaults to directory name)")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -151,6 +234,8 @@ Examples:
         "plan": cmd_plan,
         "invoke": cmd_invoke,
         "org": cmd_org,
+        "validate": cmd_validate,
+        "init": cmd_init,
     }
 
     commands[args.command](args)
