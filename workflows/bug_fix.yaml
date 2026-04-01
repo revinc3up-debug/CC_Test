@@ -1,0 +1,72 @@
+name: Bug Fix
+description: >
+  Workflow for diagnosing, fixing, testing, and documenting a bug fix.
+
+tags:
+  - bug
+  - maintenance
+
+variables:
+  bug_report: ""
+  affected_code: ""
+  error_logs: ""
+
+steps:
+  - id: diagnose
+    role: backend_developer
+    skill: debug_issue
+    description: Diagnose the root cause of the bug
+    input_mapping:
+      issue: "variable:bug_report"
+      code: "variable:affected_code"
+      logs: "variable:error_logs"
+
+  - id: design_test_cases
+    role: tester
+    skill: design_test_cases
+    description: Design regression test cases for the bug
+    depends_on:
+      - diagnose
+    input_mapping:
+      requirement: "step:diagnose"
+
+  - id: implement_fix
+    role: backend_developer
+    skill: implement_service
+    description: Implement the bug fix
+    depends_on:
+      - diagnose
+    input_mapping:
+      service_spec: "step:diagnose"
+
+  - id: write_regression_tests
+    role: tester
+    skill: write_test_code
+    description: Write regression tests for the fix
+    depends_on:
+      - design_test_cases
+      - implement_fix
+    input_mapping:
+      test_cases: "step:design_test_cases"
+      code: "step:implement_fix"
+
+  - id: review_fix
+    role: code_reviewer
+    skill: review_pull_request
+    description: Review the bug fix
+    depends_on:
+      - implement_fix
+      - write_regression_tests
+    input_mapping:
+      code_changes: "step:implement_fix"
+      pr_description: "step:diagnose"
+    review_required: true
+
+  - id: update_changelog
+    role: technical_writer
+    skill: write_changelog
+    description: Document the bug fix in changelog
+    depends_on:
+      - review_fix
+    input_mapping:
+      changes: "step:implement_fix"

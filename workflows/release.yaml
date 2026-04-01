@@ -1,0 +1,54 @@
+name: Release
+description: >
+  Release preparation workflow including test verification,
+  documentation updates, and deployment setup.
+
+tags:
+  - release
+  - deployment
+
+variables:
+  release_version: ""
+  changes_since_last_release: ""
+
+steps:
+  - id: review_test_coverage
+    role: tester
+    skill: review_test_coverage
+    description: Verify test coverage meets release criteria
+    input_mapping:
+      requirements: "variable:changes_since_last_release"
+      existing_tests: "variable:changes_since_last_release"
+
+  - id: security_review
+    role: code_reviewer
+    skill: review_security
+    description: Security review of all changes in this release
+    input_mapping:
+      code: "variable:changes_since_last_release"
+
+  - id: write_changelog
+    role: technical_writer
+    skill: write_changelog
+    description: Write release notes and changelog
+    depends_on:
+      - review_test_coverage
+    input_mapping:
+      changes: "variable:changes_since_last_release"
+
+  - id: optimize_deployment
+    role: devops
+    skill: optimize_deployment
+    description: Prepare and optimize deployment
+    input_mapping:
+      current_process: "variable:changes_since_last_release"
+      pain_points: "variable:changes_since_last_release"
+
+  - id: create_runbook
+    role: devops
+    skill: incident_response
+    description: Create/update incident response runbook
+    depends_on:
+      - optimize_deployment
+    input_mapping:
+      incident_type: "variable:changes_since_last_release"

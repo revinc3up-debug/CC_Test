@@ -1,0 +1,121 @@
+name: New Project Setup
+description: >
+  Initialize a new project with architecture, infrastructure,
+  CI/CD, design system, and documentation foundations.
+
+tags:
+  - setup
+  - initialization
+
+variables:
+  project_requirements: ""
+
+steps:
+  - id: analyze_requirements
+    role: product_manager
+    skill: analyze_requirements
+    description: Analyze project requirements
+    input_mapping:
+      requirements_input: "variable:project_requirements"
+
+  - id: define_tech_stack
+    role: architect
+    skill: define_tech_stack
+    description: Select and justify technology choices
+    depends_on:
+      - analyze_requirements
+    input_mapping:
+      requirements: "step:analyze_requirements"
+      constraints: "variable:project_requirements"
+
+  - id: design_system_architecture
+    role: architect
+    skill: design_system
+    description: Design the initial system architecture
+    depends_on:
+      - define_tech_stack
+    input_mapping:
+      requirements: "step:analyze_requirements"
+
+  - id: design_api
+    role: architect
+    skill: design_api
+    description: Design initial API contracts
+    depends_on:
+      - design_system_architecture
+    input_mapping:
+      architecture: "step:design_system_architecture"
+
+  - id: design_database
+    role: architect
+    skill: design_database
+    description: Design initial database schema
+    depends_on:
+      - design_system_architecture
+    input_mapping:
+      architecture: "step:design_system_architecture"
+
+  - id: create_design_system
+    role: ui_ux_designer
+    skill: create_design_system
+    description: Define the project's design system
+    depends_on:
+      - analyze_requirements
+    input_mapping:
+      brand_direction: "variable:project_requirements"
+
+  - id: setup_cicd
+    role: devops
+    skill: design_cicd
+    description: Setup CI/CD pipeline
+    depends_on:
+      - design_system_architecture
+    input_mapping:
+      architecture: "step:design_system_architecture"
+
+  - id: setup_infrastructure
+    role: devops
+    skill: setup_infrastructure
+    description: Define infrastructure as code
+    depends_on:
+      - design_system_architecture
+    input_mapping:
+      architecture: "step:design_system_architecture"
+
+  - id: setup_monitoring
+    role: devops
+    skill: setup_monitoring
+    description: Setup monitoring and observability
+    depends_on:
+      - setup_infrastructure
+    input_mapping:
+      architecture: "step:design_system_architecture"
+
+  - id: create_test_plan
+    role: tester
+    skill: create_test_plan
+    description: Create initial test strategy
+    depends_on:
+      - design_api
+    input_mapping:
+      feature_spec: "step:analyze_requirements"
+
+  - id: write_architecture_docs
+    role: technical_writer
+    skill: write_architecture_doc
+    description: Document the architecture for the team
+    depends_on:
+      - design_system_architecture
+      - design_api
+      - design_database
+    input_mapping:
+      architecture: "step:design_system_architecture"
+
+  - id: write_api_docs
+    role: technical_writer
+    skill: write_api_docs
+    description: Write initial API documentation
+    depends_on:
+      - design_api
+    input_mapping:
+      api_spec: "step:design_api"

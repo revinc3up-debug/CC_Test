@@ -1,0 +1,57 @@
+# Example: Applying the LLM Dev Organization to a Todo App project
+#
+# This shows how to configure the framework for a specific project.
+# Copy config.yaml to your project root and customize like this.
+
+roles_dir: roles
+workflows_dir: workflows
+
+project:
+  name: "TodoMaster"
+  description: >
+    A collaborative todo application with real-time sync, team workspaces,
+    and smart task prioritization. Users can create, organize, and share
+    task lists with their teams.
+  tech_stack:
+    frontend:
+      - Next.js 14
+      - TypeScript
+      - Tailwind CSS
+      - React Query
+    backend:
+      - Node.js
+      - Express
+      - TypeScript
+      - Prisma ORM
+    database:
+      - PostgreSQL
+      - Redis (caching)
+    infrastructure:
+      - Docker
+      - GitHub Actions
+      - AWS ECS
+      - CloudFront CDN
+  constraints:
+    - "Support 50k registered users, 5k concurrent"
+    - "Real-time sync latency < 500ms"
+    - "WCAG 2.1 AA compliance"
+    - "GDPR compliant — user data deletion within 30 days"
+    - "99.9% uptime SLA"
+    - "Mobile-responsive design"
+
+# Example workflow invocations:
+#
+# 1. Start a new feature:
+#    python cli.py plan feature_development
+#    python cli.py invoke product_manager analyze_requirements \
+#      --context requirements_input="Users want to share task lists with team members"
+#
+# 2. Review code:
+#    python cli.py plan code_review
+#
+# 3. Fix a bug:
+#    python cli.py invoke backend_developer debug_issue \
+#      --context issue="Tasks not syncing in real-time when multiple users edit"
+#
+# 4. Prepare a release:
+#    python cli.py plan release
