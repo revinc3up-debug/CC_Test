@@ -1,0 +1,185 @@
+name: Feature Development
+description: >
+  End-to-end workflow for developing a new feature, from requirements analysis
+  through implementation, testing, and documentation.
+
+tags:
+  - feature
+  - full-cycle
+
+variables:
+  feature_request: ""
+
+steps:
+  - id: analyze_requirements
+    role: product_manager
+    skill: analyze_requirements
+    description: Analyze the feature request and produce structured requirements
+    input_mapping:
+      requirements_input: "variable:feature_request"
+
+  - id: write_prd
+    role: product_manager
+    skill: write_prd
+    description: Write a Product Requirements Document
+    depends_on:
+      - analyze_requirements
+    input_mapping:
+      requirements_analysis: "step:analyze_requirements"
+
+  - id: write_user_stories
+    role: product_manager
+    skill: write_user_stories
+    description: Break PRD into detailed user stories
+    depends_on:
+      - write_prd
+    input_mapping:
+      feature_description: "step:write_prd"
+
+  - id: design_user_flow
+    role: ui_ux_designer
+    skill: design_user_flow
+    description: Design user flows for the feature
+    depends_on:
+      - write_user_stories
+    input_mapping:
+      requirements: "step:write_user_stories"
+
+  - id: design_wireframe
+    role: ui_ux_designer
+    skill: design_wireframe
+    description: Create wireframes for the user interface
+    depends_on:
+      - design_user_flow
+    input_mapping:
+      requirements: "step:design_user_flow"
+
+  - id: design_system
+    role: architect
+    skill: design_system
+    description: Design the system architecture
+    depends_on:
+      - write_user_stories
+    input_mapping:
+      requirements: "step:write_user_stories"
+
+  - id: design_api
+    role: architect
+    skill: design_api
+    description: Design API contracts
+    depends_on:
+      - design_system
+    input_mapping:
+      architecture: "step:design_system"
+
+  - id: design_database
+    role: architect
+    skill: design_database
+    description: Design database schema
+    depends_on:
+      - design_system
+    input_mapping:
+      architecture: "step:design_system"
+
+  - id: implement_data_layer
+    role: backend_developer
+    skill: implement_data_layer
+    description: Implement database models and data access layer
+    depends_on:
+      - design_database
+    input_mapping:
+      schema: "step:design_database"
+
+  - id: implement_api
+    role: backend_developer
+    skill: implement_api
+    description: Implement API endpoints
+    depends_on:
+      - design_api
+      - implement_data_layer
+    input_mapping:
+      api_spec: "step:design_api"
+
+  - id: implement_components
+    role: frontend_developer
+    skill: implement_component
+    description: Implement UI components from wireframes
+    depends_on:
+      - design_wireframe
+    input_mapping:
+      component_spec: "step:design_wireframe"
+      design_reference: "step:design_wireframe"
+
+  - id: implement_pages
+    role: frontend_developer
+    skill: implement_page
+    description: Implement pages with API integration
+    depends_on:
+      - implement_components
+      - implement_api
+    input_mapping:
+      page_spec: "step:design_wireframe"
+      api_endpoints: "step:design_api"
+
+  - id: create_test_plan
+    role: tester
+    skill: create_test_plan
+    description: Create comprehensive test plan
+    depends_on:
+      - write_user_stories
+      - design_api
+    input_mapping:
+      feature_spec: "step:write_user_stories"
+
+  - id: write_tests
+    role: tester
+    skill: write_test_code
+    description: Write automated tests
+    depends_on:
+      - implement_api
+      - implement_pages
+      - create_test_plan
+    input_mapping:
+      test_cases: "step:create_test_plan"
+      code: "step:implement_api"
+
+  - id: review_backend
+    role: code_reviewer
+    skill: review_pull_request
+    description: Review backend implementation
+    depends_on:
+      - implement_api
+    input_mapping:
+      code_changes: "step:implement_api"
+      pr_description: "step:design_api"
+    review_required: true
+
+  - id: review_frontend
+    role: code_reviewer
+    skill: review_pull_request
+    description: Review frontend implementation
+    depends_on:
+      - implement_pages
+    input_mapping:
+      code_changes: "step:implement_pages"
+      pr_description: "step:design_wireframe"
+    review_required: true
+
+  - id: setup_cicd
+    role: devops
+    skill: design_cicd
+    description: Configure CI/CD for the feature
+    depends_on:
+      - design_system
+    input_mapping:
+      architecture: "step:design_system"
+
+  - id: write_docs
+    role: technical_writer
+    skill: write_api_docs
+    description: Write API and feature documentation
+    depends_on:
+      - implement_api
+      - write_tests
+    input_mapping:
+      api_spec: "step:design_api"

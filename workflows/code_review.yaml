@@ -1,0 +1,45 @@
+name: Code Review
+description: >
+  Comprehensive code review workflow including security review,
+  test coverage analysis, and architecture compliance check.
+
+tags:
+  - review
+  - quality
+
+variables:
+  code_changes: ""
+  pr_description: ""
+
+steps:
+  - id: general_review
+    role: code_reviewer
+    skill: review_pull_request
+    description: General code quality and correctness review
+    input_mapping:
+      code_changes: "variable:code_changes"
+      pr_description: "variable:pr_description"
+
+  - id: security_review
+    role: code_reviewer
+    skill: review_security
+    description: Security-focused code review
+    input_mapping:
+      code: "variable:code_changes"
+
+  - id: test_coverage_review
+    role: tester
+    skill: review_test_coverage
+    description: Analyze test coverage and identify gaps
+    input_mapping:
+      requirements: "variable:pr_description"
+      existing_tests: "variable:code_changes"
+
+  - id: architecture_review
+    role: architect
+    skill: review_architecture
+    description: Check architecture compliance
+    depends_on:
+      - general_review
+    input_mapping:
+      proposal: "variable:code_changes"

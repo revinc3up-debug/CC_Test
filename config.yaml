@@ -1,0 +1,29 @@
+# LLM Dev Organization - Project Configuration
+# Copy this file to your project root and customize.
+
+# Directory paths (relative to this config file)
+roles_dir: roles
+workflows_dir: workflows
+
+# Project information — customize for your project
+project:
+  name: "My Project"
+  description: "A brief description of what your project does."
+  tech_stack:
+    frontend:
+      - React
+      - TypeScript
+      - Tailwind CSS
+    backend:
+      - Python
+      - FastAPI
+      - PostgreSQL
+    infrastructure:
+      - Docker
+      - GitHub Actions
+      - AWS
+  constraints:
+    - "Must support 10k concurrent users"
+    - "WCAG 2.1 AA accessibility compliance"
+    - "Response time < 200ms for API calls"
+    - "99.9% uptime SLA"
