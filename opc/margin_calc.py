@@ -12,7 +12,13 @@
 """
 import argparse
 
-JPY = 0.048  # 日元->人民币汇率，按需更新
+JPY = 0.0424  # 日元->人民币汇率（2026-06实价约4.24元/100日元），按需更新
+
+# 日本进口税负（2026-06查证）：正规ACP清关下海关按"售价倒扣法"核定货值（约售价6成），
+# 关税+进口消费税合计约为售价的8.5%；叠加免税事业者不可抵扣的平台费JCT后，
+# 综合税负约为售价的11.4%（注册JCT与免税身份大致打平）。
+# 双清包税低申报可压到2-4%，但属低申报，不采用。
+JP_TAX_RATE = 0.114
 
 
 def main() -> None:
@@ -27,7 +33,9 @@ def main() -> None:
     p.add_argument("--ads-rate", type=float, default=0.15, help="广告占比TACoS，默认15%%")
     p.add_argument("--returns-rate", type=float, default=0.05, help="退货预提，默认5%%")
     p.add_argument("--storage", type=float, default=2.0, help="月仓储分摊（元/件），默认2")
-    p.add_argument("--jpy-rate", type=float, default=JPY, help="日元汇率，默认0.048")
+    p.add_argument("--jpy-rate", type=float, default=JPY, help="日元汇率，默认0.0424")
+    p.add_argument("--jp-tax-rate", type=float, default=JP_TAX_RATE,
+                   help="日本进口+消费税综合负担占售价比，正规清关默认0.114")
     a = p.parse_args()
 
     price = a.price_jpy * a.jpy_rate
@@ -36,7 +44,8 @@ def main() -> None:
     fba = a.fba_jpy * a.jpy_rate
     ads = a.ads_rate * price
     returns = a.returns_rate * price
-    total_cost = a.cost + freight + commission + fba + ads + returns + a.storage
+    jp_tax = a.jp_tax_rate * price
+    total_cost = a.cost + freight + commission + fba + ads + returns + a.storage + jp_tax
     net = price - total_cost
     margin = net / price
 
@@ -45,6 +54,7 @@ def main() -> None:
         ("采购成本", a.cost), ("头程运费", freight), (f"佣金 {a.commission:.0%}", commission),
         ("FBA配送费", fba), (f"广告 {a.ads_rate:.0%}", ads),
         (f"退货预提 {a.returns_rate:.0%}", returns), ("仓储分摊", a.storage),
+        (f"日本税负 {a.jp_tax_rate:.1%}", jp_tax),
     ]
     for label, v in rows:
         print(f"  {label:<12} {v:>8.1f} 元  ({v / price:.1%})")
