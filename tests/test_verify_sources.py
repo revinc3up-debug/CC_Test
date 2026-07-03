@@ -89,3 +89,48 @@ def test_xiaohongshu_pass_when_service_up(monkeypatch):
 def test_classify_error_timeout_is_blocked():
     status, _ = vs._classify_error(socket.timeout("timed out"))
     assert status == vs.BLOCKED
+
+
+EVIDENCE = {
+    "wechat": {
+        "allowed_domains": ["mp.weixin.qq.com"],
+        "items": [
+            {"title": "晚点独家丨林俊旸提出离职", "url": "https://mp.weixin.qq.com/s/x"},
+            {"title": "腾讯XR业务解散部分团队｜36氪独家", "url": "https://mp.weixin.qq.com/s/y"},
+        ],
+    },
+    "xiaohongshu": {
+        "allowed_domains": ["xiaohongshu.com"],
+        "items": [{"title": "大厂裁员/PIP", "url": "https://www.xiaohongshu.com/x"}],
+    },
+}
+
+
+def test_evidence_wechat_pass():
+    r = vs.check_from_evidence(EVIDENCE, "wechat", "微信搜索", "微信搜索")
+    assert r.status == vs.PASS
+    assert "2 条" in r.detail
+    assert "林俊旸" in r.sample
+
+
+def test_evidence_xhs_pass():
+    r = vs.check_from_evidence(EVIDENCE, "xiaohongshu", "小红书检索", "小红书检索")
+    assert r.status == vs.PASS
+
+
+def test_evidence_empty_is_fail():
+    r = vs.check_from_evidence({"wechat": {"items": []}}, "wechat", "微信搜索", "微信搜索")
+    assert r.status == vs.FAIL
+
+
+def test_evidence_item_missing_url_is_fail():
+    bad = {"wechat": {"items": [{"title": "缺url"}]}}
+    r = vs.check_from_evidence(bad, "wechat", "微信搜索", "微信搜索")
+    assert r.status == vs.FAIL
+
+
+def test_run_with_evidence_passes_both():
+    results = vs.run("q", 5, {"wechat", "xhs"}, evidence=EVIDENCE)
+    by_cat = {r.category: r.status for r in results}
+    assert by_cat["微信搜索"] == vs.PASS
+    assert by_cat["小红书检索"] == vs.PASS

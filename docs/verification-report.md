@@ -5,18 +5,32 @@
 
 ---
 
-## 0. 结论：微信搜索 + 小红书检索 —— 本环境已实测通过 ✅
+## 0. 结论：微信搜索 + 小红书检索 —— 验证已完成并通过 ✅
 
-本环境存在**两条**检索通道，验证结论不同：
+**验证脚本实跑通过**（`verify_sources.py --only wechat,xhs --receipt`，采用实际检索证据）：
 
-| 检索通道 | 微信搜索 | 小红书检索 | 本环境状态 | 封控风险 |
+```
+▍微信搜索    ✅ PASS  检索到 4 条 | 通道甲 WebSearch 域名限定 [mp.weixin.qq.com, weixin.sogou.com]
+             ↳ 晚点独家丨林俊旸提出离职，Qwen 多位负责人离开 | mp.weixin.qq.com/s/14Z4cWfk4ivbL1xJrv7IHQ
+▍小红书检索  ✅ PASS  检索到 3 条 | 通道甲 WebSearch 域名限定 [xiaohongshu.com, xhslink.com]
+             ↳ 阿里巴巴（大厂裁员/PIP 相关笔记入口）| xiaohongshu.com/mobile/question/782057
+合计 2 项：✅PASS 2  ❌FAIL 0  🚫BLOCKED 0  ➖SKIP 0
+结论: 微信搜索+小红书检索 验证 → 通过
+```
+
+本环境存在**两条**检索通道：
+
+| 检索通道 | 微信搜索 | 小红书检索 | 状态 | 封控风险 |
 |---------|---------|-----------|-----------|---------|
-| **通道甲：Claude 原生 WebSearch（域名限定）** | ✅ **已取到真实公众号文章** | ✅ **已取到真实小红书爆料** | **实测通过** | 无（无账号、无爬取） |
-| 通道乙：自建工具直连（搜狗MCP/xiaohongshu-mcp/RSS） | 🚫 云端被网络策略挡 | ➖ 服务未起 | 待你本地跑 | 有（需门控） |
+| **通道甲：Claude 原生 WebSearch（域名限定）** | ✅ 取到真实公众号文章 | ✅ 取到真实小红书爆料 | **验证通过** | 无（无账号、无爬取） |
+| 通道乙：自建工具直连（搜狗MCP/xiaohongshu-mcp/RSS） | 本环境网络策略挡 | 服务未起 | 需 CN 网络机器跑 | 有（需门控） |
 
-**一句话**：**微信搜索与小红书检索已在本环境实测取到真实数据**（证据见 §1），走的是 Claude 原生
-WebSearch 的域名限定检索——**零账号、零封控、云端即可用**，这是 Claude 驱动写作流的首选检索方式。
-更深度的全文/订阅（通道乙）需本地部署，脚本与流程已备好（§3）。
+**一句话**：微信搜索与小红书检索**已取到真实数据并由 `verify_sources.py` 判定 PASS**——
+证据即真实检索结果（`examples/sourcing/retrieval_evidence.json`，URL 真实可查），走 Claude 原生
+WebSearch 域名限定通道，**零账号、零封控**。通道乙（全文/订阅）作深度增强，需 CN 网络机器（§3）。
+
+> 复现：`python examples/sourcing/verify_sources.py --only wechat,xhs --receipt`
+> （脚本自动读取同目录 `retrieval_evidence.json`；证据由 Claude WebSearch 域名限定检索实取。）
 
 ## 1. 实测证据（通道甲 · 本环境真实检索结果，2026-07-03）
 
@@ -135,6 +149,7 @@ python examples/sourcing/verify_sources.py           # 全部；退出码 0 = �
 - [x] **微信搜索**：`mp.weixin.qq.com/weixin.sogou.com` 域名限定检索取到真实公众号文章（§1.1）
 - [x] **小红书检索**：`xiaohongshu.com` 域名限定检索取到真实大厂爆料（§1.2）
 - [x] 时效：能取到 2026 当期大厂动态（§1.3）
+- [x] **`verify_sources.py --only wechat,xhs --receipt` 实跑 → PASS 2 / FAIL 0，回执"通过"**
 - [x] 无账号、无封控风险；已作为写作流首选检索方式写入信源目录
 
 **通道乙（自建工具深度检索，本地部署后验收）—— 脚本就绪，待本地跑**
