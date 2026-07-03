@@ -263,6 +263,8 @@ def main() -> int:
     ap.add_argument("--timeout", type=float, default=15.0)
     ap.add_argument("--only", default="",
                     help="逗号分隔子集：rss,wechat,xhs,local（默认全部）")
+    ap.add_argument("--receipt", action="store_true",
+                    help="额外打印一段可回帖的『本地验证回执』，贴回给 Claude 即可闭环")
     args = ap.parse_args()
     only = {s.strip() for s in args.only.split(",") if s.strip()}
 
@@ -290,6 +292,26 @@ def main() -> int:
           f"{ICON[SKIP]}SKIP {n_skip}")
     if n_block:
         print("提示：BLOCKED 多为网络策略/反爬。若在云端环境属预期；本地/国内网络应为 PASS。")
+
+    if args.receipt:
+        import platform
+        import datetime
+        wechat = next((r for r in results if r.category == "微信搜索"), None)
+        xhs = next((r for r in results if r.category == "小红书检索"), None)
+        stamp = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
+        print("\n===== 本地验证回执（复制以下整段贴回给 Claude）=====")
+        print(f"[本地环境资源获取验证回执] time={stamp} host={platform.node()} "
+              f"os={platform.system()}")
+        print(f"  微信搜索: {wechat.status if wechat else 'N/A'} "
+              f"| {wechat.detail if wechat else ''}")
+        print(f"  小红书检索: {xhs.status if xhs else 'N/A'} "
+              f"| {xhs.detail if xhs else ''}")
+        print(f"  汇总: PASS {n_pass} / FAIL {n_fail} / BLOCKED {n_block} / SKIP {n_skip}")
+        verdict = "通过" if (wechat and wechat.status == PASS
+                             and (xhs is None or xhs.status in (PASS, SKIP))
+                             and n_fail == 0) else "未通过/需排查"
+        print(f"  结论: 微信搜索+小红书检索 本地验证 → {verdict}")
+        print("=================================================")
     return 1 if n_fail else 0
 
 

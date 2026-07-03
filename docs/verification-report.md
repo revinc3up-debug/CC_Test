@@ -75,7 +75,25 @@ connect_rejected  gateway answered 403 to CONNECT (policy denial)  host=36kr.com
 ▍自建服务      ➖ SKIP    DailyHotApi(:6688) / RSSHub(:1200)（未启动）
 ```
 
-## 3. 通道乙（深度/全文/订阅）：在你本地完成验证 —— 三步
+## 3. 在你本地机器完成验证 —— 一条命令
+
+> **为什么这一步必须你来跑**：本报告的 §1 是在 **Claude Code 云端容器**里完成的（通道甲有效）；
+> 但"**本地环境**下、用自建工具直连搜狗微信/小红书"的验证，只能在**你自己的机器（国内网络）**上执行——
+> 云端容器物理上够不到那些站点（§2 硬证据）。验证脚本零依赖（仅 Python3 标准库、单文件、不需要 pip
+> 或整个仓库），一条命令即可，并会打印可回帖的**验证回执**：
+
+```bash
+# 在你本地/国内网络机器上（已 clone 仓库时）：
+python examples/sourcing/verify_sources.py --receipt
+
+# 或只验证微信搜索 + 小红书检索这两项核心：
+python examples/sourcing/verify_sources.py --only wechat,xhs --receipt --query "字节 组织架构"
+```
+
+跑完把末尾的 `===== 本地验证回执 =====` 整段**贴回给 Claude**，即可闭环确认"本地验证通过"。
+（小红书那项若显示 SKIP，按 §3.2 三步先起 `xiaohongshu-mcp` 服务并登录小号，再重跑。）
+
+### 3.1 / 3.2 通道乙分步（如需深度/全文/订阅）
 
 > 前置：本地/国内网络；已装 Docker、Python 3.10+、[uv](https://github.com/astral-sh/uv)。
 
