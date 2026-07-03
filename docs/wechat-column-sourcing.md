@@ -99,16 +99,21 @@ GitHub 上只有年久失修的逆向脚本（[lsongdev/maimai-js](https://githu
 
 配套的机器可读清单见 `examples/wechat_column_sourcing.yaml`。
 
-## 5. 落地步骤建议
+## 5. 落地步骤建议（本地部署优先）
 
-1. **准备一台国内/香港 VPS**（境外出口对搜狗、微博、RSSHub 公共实例均 403，已实测）。
-2. Docker 起三件套：`DailyHotApi`、`RSSHub`、`we-mp-rss`（微信扫码授权用小号）。
-3. 本地/云端 Claude Code 挂 MCP：`sogou-weixin-mcp-server`（uvx 直跑）、
-   `mcp-server-weibo`、`xiaohongshu-mcp`（需登录小红书小号，注意单端在线限制）。
-4. 写作流程：每晚 20:00 拉第一层+第二层 → 选头瓜 → 第三层逐条交叉验证 →
+> 已定策略：**先在本地机器部署，有机会再迁移云端**。
+> 完整操作手册见 `docs/local-deployment.md`，配置文件见 `examples/sourcing/`。
+
+1. 本地 Docker 起三件套：`DailyHotApi`（:6688）、`RSSHub`（:1200）、
+   `we-mp-rss`（:8001，微信扫码授权用小号）——`examples/sourcing/docker-compose.yml` 一键启动。
+2. 本地 Claude Code 挂 MCP：`sogou-weixin-mcp-server`（uvx 直跑）、
+   `mcp-server-weibo`（uvx）、`xiaohongshu-mcp`（:18060，需登录小红书小号，注意单端在线限制）。
+3. 写作流程：每晚 20:00 拉第一层+第二层 → 选头瓜 → 第三层逐条交叉验证 →
    按栏目 Prompt 生成样刊 → 发布前跑"信源自查清单"。
-5. 风控提醒：搜狗/小红书/微博接口均无官方授权，**控制频率（每天 1~2 轮足够）、
+4. 风控提醒：搜狗/小红书/微博接口均无官方授权，**控制频率（每天 1~2 轮足够）、
    用小号、缓存结果**；wewe-rss 的封控史（24h 小黑屋）是前车之鉴。
+5. 后续迁移云端：选国内/香港 VPS（境外机房已实测 403），compose 与 `./data/`
+   目录原样平移即可保留授权与订阅，详见本地部署指南第 5 节。
 
 ## 6. 本次检索来源
 

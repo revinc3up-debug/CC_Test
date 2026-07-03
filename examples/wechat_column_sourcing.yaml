@@ -1,7 +1,8 @@
 # 《大厂茶水间》信源管线配置（机器可读版）
-# 详细调研与评估见 docs/wechat-column-sourcing.md
+# 详细调研与评估见 docs/wechat-column-sourcing.md，部署手册见 docs/local-deployment.md
 # 调研日期: 2026-07-03
-# 注意: 公共实例在境外环境实测均 403/失效，以下工具全部需要自部署（国内/香港 VPS）
+# 部署策略: 本地部署优先（examples/sourcing/docker-compose.yml），后续迁移国内/香港 VPS
+# 注意: 公共实例在境外环境实测均 403/失效，以下工具全部需要自部署
 
 column:
   name: 大厂茶水间
@@ -19,12 +20,12 @@ pipeline:
       - id: daily_hot_api
         repo: https://github.com/imsyy/DailyHotApi
         type: rest_api_rss
-        deploy: self_hosted_docker
+        deploy: local_docker  # examples/sourcing/docker-compose.yml
         feeds: [36kr, ithome, weibo, zhihu, thepaper]
       - id: rsshub
         repo: https://github.com/DIYgod/RSSHub
         type: rss
-        deploy: self_hosted_docker
+        deploy: local_docker  # examples/sourcing/docker-compose.yml
         routes: ["/36kr/newsflashes", "/weibo/search/hot"]
 
   - layer: 2
@@ -34,7 +35,7 @@ pipeline:
       - id: we_mp_rss
         repo: https://github.com/rachelos/we-mp-rss
         type: rss_api_webhook
-        deploy: self_hosted_docker
+        deploy: local_docker  # examples/sourcing/docker-compose.yml
         auth: 微信扫码授权（建议小号）
         subscriptions:
           - 晚点LatePost
