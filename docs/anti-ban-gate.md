@@ -98,6 +98,9 @@ else:
 > 也不占门控配额。`大厂日爆` 有独立站正是这个原因值得优先。（注：dachangribao.com 在本
 > Claude Code 境外环境 DNS 解析失败，属环境网络限制；本地/国内网络应可正常访问，落地时请自行核实。）
 
+> 📚 **完整的独立站 / RSS 资源目录见 `docs/source-catalog.md`**（原生 RSS 站、RSSHub 路由、
+> newsletter、英文源分级整理），可直接导入的订阅清单见 `examples/sourcing/feeds.opml`。
+
 ## 6. 调研来源
 - 搜狗微信反爬：[知乎·搜狗微信爬虫](https://zhuanlan.zhihu.com/p/270296193)、[CSDN·搜狗微信反爬机制](https://blog.csdn.net/sinat_23069795/article/details/89888507)
 - 小红书风控：[CSDN·2025 小红书反爬](https://blog.csdn.net/shanwei_spider/article/details/155629115)、[CSDN·小红书风控行为检测](https://blog.csdn.net/klj3388/article/details/146016922)

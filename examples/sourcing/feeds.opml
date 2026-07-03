@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  《大厂茶水间》信源订阅清单（OPML）
+  可直接导入 RSS 阅读器 / we-mp-rss。分类与说明见 docs/source-catalog.md。
+
+  说明：
+  - "原生 RSS 独立站" 直连，零账号封控、不占防封门控配额，为日常拉取主力。
+  - "需 RSSHub" 分组的 xmlUrl 指向自建实例 http://localhost:1200（见 docker-compose.yml）；
+    迁云端时把该前缀整体替换为 VPS 地址。
+  - 境外环境未能逐条实拉验证，本地/国内导入后请自行确认可用性，失效条目用 RSSHub 路由兜底。
+-->
+<opml version="2.0">
+  <head>
+    <title>大厂茶水间 · 信源订阅</title>
+  </head>
+  <body>
+    <outline text="原生RSS独立站（首选·零封控）" title="原生RSS独立站（首选·零封控）">
+      <outline type="rss" text="36氪·全站" title="36氪·全站" xmlUrl="https://36kr.com/feed" htmlUrl="https://36kr.com/"/>
+      <outline type="rss" text="36氪·快讯" title="36氪·快讯" xmlUrl="https://36kr.com/feed-newsflash" htmlUrl="https://36kr.com/newsflashes"/>
+      <outline type="rss" text="虎嗅" title="虎嗅" xmlUrl="https://rss.huxiu.com/" htmlUrl="https://www.huxiu.com/"/>
+      <outline type="rss" text="钛媒体" title="钛媒体" xmlUrl="https://www.tmtpost.com/rss.xml" htmlUrl="https://www.tmtpost.com/"/>
+      <outline type="rss" text="IT之家" title="IT之家" xmlUrl="https://www.ithome.com/rss/" htmlUrl="https://www.ithome.com/"/>
+      <outline type="rss" text="少数派" title="少数派" xmlUrl="https://sspai.com/feed" htmlUrl="https://sspai.com/"/>
+      <outline type="rss" text="爱范儿" title="爱范儿" xmlUrl="https://www.ifanr.com/feed" htmlUrl="https://www.ifanr.com/"/>
+    </outline>
+    <outline text="需RSSHub独立站（自建:1200兜底）" title="需RSSHub独立站（自建:1200兜底）">
+      <outline type="rss" text="晚点LatePost" title="晚点LatePost" xmlUrl="http://localhost:1200/latepost" htmlUrl="https://www.latepost.com/"/>
+      <outline type="rss" text="36氪快讯（RSSHub备用）" title="36氪快讯（RSSHub备用）" xmlUrl="http://localhost:1200/36kr/newsflashes" htmlUrl="https://36kr.com/newsflashes"/>
+      <outline type="rss" text="大厂青年（即刻）" title="大厂青年（即刻）" xmlUrl="http://localhost:1200/jike/user/80543A26-D336-45CA-A958-9D59E7812612" htmlUrl="https://m.okjike.com/users/80543A26-D336-45CA-A958-9D59E7812612"/>
+    </outline>
+    <outline text="Newsletter/周刊" title="Newsletter/周刊">
+      <outline type="rss" text="阮一峰·科技爱好者周刊" title="阮一峰·科技爱好者周刊" xmlUrl="https://www.ruanyifeng.com/blog/atom.xml" htmlUrl="https://www.ruanyifeng.com/blog/"/>
+    </outline>
+    <outline text="英文/海外看中国科技" title="英文/海外看中国科技">
+      <outline type="rss" text="TechNode" title="TechNode" xmlUrl="https://technode.com/feed/" htmlUrl="https://technode.com/"/>
+      <outline type="rss" text="PingWest品玩（英文）" title="PingWest品玩（英文）" xmlUrl="https://en.pingwest.com/feed" htmlUrl="https://en.pingwest.com/"/>
+    </outline>
+  </body>
+</opml>
