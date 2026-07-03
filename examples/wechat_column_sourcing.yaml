@@ -37,12 +37,17 @@ pipeline:
         type: rss_api_webhook
         deploy: local_docker  # examples/sourcing/docker-compose.yml
         auth: 微信扫码授权（建议小号）
+        # 优先订阅成熟大厂资讯号（风险可控），少直连搜索接口
         subscriptions:
+          - 大厂日爆        # 大厂新闻八卦聚合，选题密度高；另有独立站 dachangribao.com
+          - 大厂青年        # 大厂员工视角资讯
           - 晚点LatePost
           - 36氪
+          - Tech星球
+          - 字母榜
+          - 蓝鲸财经
           - 界面新闻
           - 财新网
-          - Tech星球
           - 雷峰网
           - 量子位
 
@@ -78,6 +83,13 @@ excluded:
     reason: 无维护良好的开源工具、反爬强、匿名区抓取有合规争议；由主理人人工喂素材（档B），内容一律 🔴 级
 
 risk_controls:
-  - 搜狗/微博/小红书接口均无官方授权，控制频率（每日 1~2 轮）并缓存结果
-  - 所有需登录的工具使用小号，避免主账号风控
-  - wewe-rss 已归档且有"添加过频封控 24h"前科，不再部署
+  # 防封门控（阈值配置）: examples/sourcing/anti_ban_gate.yaml
+  # 门控实现: framework/sourcing_gate.py ｜ 策略说明: docs/anti-ban-gate.md
+  gate_config: examples/sourcing/anti_ban_gate.yaml
+  notes:
+    - 每次对外请求前先过 SourcingGate.acquire()：三道闸门（最小间隔/每日配额/熔断冷却）
+    - 搜狗/微博/小红书接口均无官方授权，控制频率（每日 1~2 轮）并缓存结果
+    - 所有需登录的工具使用小号，避免主账号风控；小红书登录后勿多端在线
+    - 命中封控信号（验证码/403/302/小黑屋）立即 report_block()，禁止立刻重试
+    - 优先订阅资讯号 + 独立站，少直连搜索接口（详见 docs/anti-ban-gate.md 第 5 节）
+    - wewe-rss 已归档且有"添加过频封控 24h"前科，不再部署

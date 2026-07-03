@@ -79,9 +79,25 @@ Claude Desktop / 其他 MCP 客户端用配置文件方式：见 `examples/sourc
 
 ## 4. 频率与风控（本地同样适用）
 
+**每次对外请求前先过防封门控** `framework/sourcing_gate.py`（阈值见
+`examples/sourcing/anti_ban_gate.yaml`，各平台封控机制与门控设计详见 `docs/anti-ban-gate.md`）：
+
+```python
+from framework.sourcing_gate import SourcingGate
+gate = SourcingGate.from_yaml("examples/sourcing/anti_ban_gate.yaml")
+d = gate.acquire("xiaohongshu")
+if d.allowed:
+    if d.wait_seconds: time.sleep(d.wait_seconds)
+    ...  # 发请求；成功 gate.report_success()，被封 gate.report_block()
+else:
+    ...  # 冷却/配额耗尽 → 跳过并降级该板块
+```
+
+配套人肉纪律：
 - 搜狗/微博/小红书接口均无官方授权：**每天 1~2 轮拉取足够**，结果落盘缓存，别循环重试；
-- 所有登录态一律小号；主号不碰任何工具；
+- 所有登录态一律小号；主号不碰任何工具；小红书登录 MCP 后勿多端在线；
 - DailyHotApi 自带 60 分钟缓存，不必反复请求；
+- **优先订阅资讯号 + 独立站**（大厂日爆、大厂青年、晚点、Tech星球…），少直连搜索接口；
 - 某路信源挂了就按栏目规则降级（板块可删、条数可减），**宁缺毋滥**。
 
 ## 5. 之后迁移云端的路径
