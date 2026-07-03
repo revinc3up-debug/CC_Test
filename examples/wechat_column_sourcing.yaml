@@ -71,12 +71,32 @@ pipeline:
         capabilities: [keyword_search_with_time_filter, post_detail, comments]
 
   - layer: 4
-    purpose: 兜底降级（自部署层不可用时，判档声明中注明降级）
+    purpose: Claude 原生 WebSearch 域名限定检索（零封控 · 本环境已实测通过）
     default_tier: by_hit_media
+    note: >
+      2026-07-03 实测：用 allowed_domains 限定后，可直接检索微信公众号与小红书内容，
+      无需账号、无封控风险、不占防封门控配额，云端本地皆可用。
+      详见 docs/verification-report.md。这是 Claude 驱动写作流的首选检索方式；
+      自建工具（layer 1~3）作深度/全文/订阅增强。
     tools:
-      - id: builtin_web_search
-        type: builtin
-        note: Claude 内置 WebSearch，时效与精度有限，仅兜底
+      - id: websearch_wechat
+        type: builtin_websearch
+        purpose: 微信搜索
+        allowed_domains: [mp.weixin.qq.com, weixin.sogou.com]
+        verified: true   # 已取到真实公众号文章
+      - id: websearch_xiaohongshu
+        type: builtin_websearch
+        purpose: 小红书检索
+        allowed_domains: [xiaohongshu.com, xhslink.com]
+        verified: true   # 已取到真实大厂爆料
+      - id: websearch_authoritative
+        type: builtin_websearch
+        purpose: 权威媒体交叉验证（人事类第二信源 + 新鲜度）
+        allowed_domains: [36kr.com, latepost.com, huxiu.com, jiemian.com]
+        verified: true   # 已取到 2026 当期内容
+    caveats:
+      - WebFetch 抓 CN 全文正文在云端被网络策略拦（403），只能拿 WebSearch 标题+摘要
+      - 时效随查询而变：query 带年份并逐条核对日期，勿把旧文当新瓜
 
 excluded:
   - source: 脉脉职言
