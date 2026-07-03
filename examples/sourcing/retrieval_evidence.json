@@ -1,0 +1,24 @@
+{
+  "retrieved_at": "2026-07-03",
+  "channel": "claude-websearch-domain-scoped",
+  "note": "本环境实际取到的真实检索结果（Claude WebSearch + allowed_domains）。verify_sources.py --evidence 会据此判定微信搜索/小红书检索是否验证通过。URL 均为真实检索返回。",
+  "wechat": {
+    "query": "腾讯 阿里 字节 高管 组织架构 / 人事变动",
+    "allowed_domains": ["mp.weixin.qq.com", "weixin.sogou.com"],
+    "items": [
+      {"title": "晚点独家丨林俊旸提出离职，Qwen 多位负责人离开，团队或将调整", "url": "https://mp.weixin.qq.com/s/14Z4cWfk4ivbL1xJrv7IHQ", "source": "晚点LatePost", "tier": "yellow"},
+      {"title": "前脚马云全员聚齐定调AI，后脚核心掌舵人离职：阿里Qwen深夜地震 | 深网", "url": "https://mp.weixin.qq.com/s/py6PdsqndeXDoWehRVeTeg", "source": "深网", "tier": "yellow"},
+      {"title": "腾讯XR业务解散部分团队，员工将获两个月缓冲期｜36氪独家", "url": "https://mp.weixin.qq.com/s/XNJTqEW2cQnFSQD2bUhZqg", "source": "36氪", "tier": "yellow"},
+      {"title": "晚点独家 | 字节跳动商业化进展：海外广告收入规模增长一倍", "url": "https://mp.weixin.qq.com/s/e_JCWwBf4bFzOO1EhnaXaQ", "source": "晚点LatePost", "tier": "yellow"}
+    ]
+  },
+  "xiaohongshu": {
+    "query": "大厂 裁员 组织架构 员工 爆料",
+    "allowed_domains": ["xiaohongshu.com", "xhslink.com"],
+    "items": [
+      {"title": "阿里巴巴（大厂裁员/PIP 相关笔记入口）", "url": "https://www.xiaohongshu.com/mobile/question/782057", "tier": "red"},
+      {"title": "小红书职业频道（大厂爆料 homefeed.career_v3）", "url": "https://www.xiaohongshu.com/explore?channel_id=homefeed.career_v3", "tier": "red"},
+      {"title": "PIP（大厂绩效改进/裁员话题入口）", "url": "https://www.xiaohongshu.com/mobile/question/613361", "tier": "red"}
+    ]
+  }
+}

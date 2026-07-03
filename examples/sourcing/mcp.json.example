@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "sogou-weixin": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/ptbsare/sogou-weixin-mcp-server.git",
+        "sogou-weixin-mcp-server"
+      ]
+    },
+    "weibo": {
+      "command": "uvx",
+      "args": ["mcp-server-weibo"]
+    },
+    "xiaohongshu-mcp": {
+      "url": "http://localhost:18060/mcp"
+    }
+  }
+}

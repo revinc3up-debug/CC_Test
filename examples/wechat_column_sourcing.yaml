@@ -1,0 +1,115 @@
+# 《大厂茶水间》信源管线配置（机器可读版）
+# 详细调研与评估见 docs/wechat-column-sourcing.md，部署手册见 docs/local-deployment.md
+# 调研日期: 2026-07-03
+# 部署策略: 本地部署优先（examples/sourcing/docker-compose.yml），后续迁移国内/香港 VPS
+# 注意: 公共实例在境外环境实测均 403/失效，以下工具全部需要自部署
+
+column:
+  name: 大厂茶水间
+  freshness_window_hours: 48
+  source_tiers:
+    green: 官宣（公司公告/官方公众号/财报）
+    yellow: 权威媒体（晚点LatePost、36氪、财新、界面等）
+    red: 据传/网传（社区传闻，只进"茶水间风声"板块）
+
+pipeline:
+  - layer: 1
+    purpose: 快讯基线（快讯拼盘/头瓜选题）
+    default_tier: yellow
+    tools:
+      - id: daily_hot_api
+        repo: https://github.com/imsyy/DailyHotApi
+        type: rest_api_rss
+        deploy: local_docker  # examples/sourcing/docker-compose.yml
+        feeds: [36kr, ithome, weibo, zhihu, thepaper]
+      - id: rsshub
+        repo: https://github.com/DIYgod/RSSHub
+        type: rss
+        deploy: local_docker  # examples/sourcing/docker-compose.yml
+        routes: ["/36kr/newsflashes", "/weibo/search/hot"]
+
+  - layer: 2
+    purpose: 权威公众号订阅（人事雷达的 🟡 信源标签来源）
+    default_tier: yellow
+    tools:
+      - id: we_mp_rss
+        repo: https://github.com/rachelos/we-mp-rss
+        type: rss_api_webhook
+        deploy: local_docker  # examples/sourcing/docker-compose.yml
+        auth: 微信扫码授权（建议小号）
+        # 优先订阅成熟大厂资讯号（风险可控），少直连搜索接口
+        subscriptions:
+          - 大厂日爆        # 大厂新闻八卦聚合，选题密度高；另有独立站 dachangribao.com
+          - 大厂青年        # 大厂员工视角资讯
+          - 晚点LatePost
+          - 36氪
+          - Tech星球
+          - 字母榜
+          - 蓝鲸财经
+          - 界面新闻
+          - 财新网
+          - 雷峰网
+          - 量子位
+
+  - layer: 3
+    purpose: 关键词交叉验证（人事类须 2 个独立信源）
+    default_tier: mixed
+    tools:
+      - id: sogou_weixin_mcp
+        repo: https://github.com/ptbsare/sogou-weixin-mcp-server
+        type: mcp
+        run: uvx --from git+https://github.com/ptbsare/sogou-weixin-mcp-server.git sogou-weixin-mcp-server
+        returns: [title, snippet, url, source, date]
+      - id: weibo_mcp
+        repo: https://github.com/qinyuanpei/mcp-server-weibo
+        type: mcp
+        capabilities: [hot_search, content_search, user_search]
+      - id: xiaohongshu_mcp
+        repo: https://github.com/xpzouying/xiaohongshu-mcp
+        type: mcp
+        auth: 需登录小红书账号（小号，单端在线）
+        capabilities: [keyword_search_with_time_filter, post_detail, comments]
+
+  - layer: 4
+    purpose: Claude 原生 WebSearch 域名限定检索（零封控 · 本环境已实测通过）
+    default_tier: by_hit_media
+    note: >
+      2026-07-03 实测：用 allowed_domains 限定后，可直接检索微信公众号与小红书内容，
+      无需账号、无封控风险、不占防封门控配额，云端本地皆可用。
+      详见 docs/verification-report.md。这是 Claude 驱动写作流的首选检索方式；
+      自建工具（layer 1~3）作深度/全文/订阅增强。
+    tools:
+      - id: websearch_wechat
+        type: builtin_websearch
+        purpose: 微信搜索
+        allowed_domains: [mp.weixin.qq.com, weixin.sogou.com]
+        verified: true   # 已取到真实公众号文章
+      - id: websearch_xiaohongshu
+        type: builtin_websearch
+        purpose: 小红书检索
+        allowed_domains: [xiaohongshu.com, xhslink.com]
+        verified: true   # 已取到真实大厂爆料
+      - id: websearch_authoritative
+        type: builtin_websearch
+        purpose: 权威媒体交叉验证（人事类第二信源 + 新鲜度）
+        allowed_domains: [36kr.com, latepost.com, huxiu.com, jiemian.com]
+        verified: true   # 已取到 2026 当期内容
+    caveats:
+      - WebFetch 抓 CN 全文正文在云端被网络策略拦（403），只能拿 WebSearch 标题+摘要
+      - 时效随查询而变：query 带年份并逐条核对日期，勿把旧文当新瓜
+
+excluded:
+  - source: 脉脉职言
+    reason: 无维护良好的开源工具、反爬强、匿名区抓取有合规争议；由主理人人工喂素材（档B），内容一律 🔴 级
+
+risk_controls:
+  # 防封门控（阈值配置）: examples/sourcing/anti_ban_gate.yaml
+  # 门控实现: framework/sourcing_gate.py ｜ 策略说明: docs/anti-ban-gate.md
+  gate_config: examples/sourcing/anti_ban_gate.yaml
+  notes:
+    - 每次对外请求前先过 SourcingGate.acquire()：三道闸门（最小间隔/每日配额/熔断冷却）
+    - 搜狗/微博/小红书接口均无官方授权，控制频率（每日 1~2 轮）并缓存结果
+    - 所有需登录的工具使用小号，避免主账号风控；小红书登录后勿多端在线
+    - 命中封控信号（验证码/403/302/小黑屋）立即 report_block()，禁止立刻重试
+    - 优先订阅资讯号 + 独立站，少直连搜索接口（详见 docs/anti-ban-gate.md 第 5 节）
+    - wewe-rss 已归档且有"添加过频封控 24h"前科，不再部署

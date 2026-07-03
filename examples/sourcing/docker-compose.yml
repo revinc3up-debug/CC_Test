@@ -1,0 +1,28 @@
+# 《大厂茶水间》信源三件套（本地部署版）
+# 使用说明见 docs/local-deployment.md
+services:
+  dailyhot-api:
+    image: imsyy/dailyhot-api:latest
+    container_name: dailyhot-api
+    ports:
+      - "6688:6688"
+    restart: always
+
+  rsshub:
+    image: diygod/rsshub:latest
+    container_name: rsshub
+    ports:
+      - "1200:1200"
+    environment:
+      - CACHE_EXPIRE=3600
+    restart: always
+
+  we-mp-rss:
+    image: ghcr.io/rachelos/we-mp-rss:latest
+    container_name: we-mp-rss
+    ports:
+      - "8001:8001"
+    volumes:
+      # 保存微信授权与订阅数据；迁移云端时整个目录带走
+      - ./data/we-mp-rss:/app/data
+    restart: always
