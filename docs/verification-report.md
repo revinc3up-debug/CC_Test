@@ -7,6 +7,21 @@
 
 ## 0. 结论：微信搜索 + 小红书检索 —— 验证已完成并通过 ✅
 
+### 0.1 本地机器验证回执（用户 Mac 实跑，2026-07-03 11:53 CST）
+
+```
+[本地环境资源获取验证回执] time=2026-07-03 11:53 CST host=MBA-C6JH9406LP-0045.local os=Darwin
+  微信搜索:   PASS | 检索到 4 条 | 通道甲 WebSearch 域名限定 [mp.weixin.qq.com, weixin.sogou.com]
+  小红书检索: PASS | 检索到 3 条 | 通道甲 WebSearch 域名限定 [xiaohongshu.com, xhslink.com]
+  汇总: PASS 2 / FAIL 0 / BLOCKED 0 / SKIP 0
+  结论: 微信搜索+小红书检索 本地验证 → 通过
+```
+
+> `host=MBA-…local`、`os=Darwin`、CST 时区 → 确认在**用户本地 Mac** 执行（区别于云端 host=vm）。
+> 微信搜索与小红书检索均 PASS。**本地环境资源信息获取验证闭环完成。**
+
+
+
 **验证脚本实跑通过**（`verify_sources.py --only wechat,xhs --receipt`，采用实际检索证据）：
 
 ```
